@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#1b2a24" />
+    <meta
+      name="description"
+      content="Nonaga — the two-player strategy game by Viktor Bautista i Roca, playable in the browser."
+    />
+    <title>Nonaga</title>
+  </head>
+  <body>
+    <div class="app">
+      <header class="masthead">
+        <h1>Nonaga</h1>
+        <p class="tagline">Get your three pawns together first.</p>
+      </header>
+
+      <main class="layout">
+        <section class="stage">
+          <p class="status" id="status" aria-live="polite"></p>
+          <div class="board-frame">
+            <svg
+              id="board"
+              viewBox="0 0 10 10"
+              role="application"
+              aria-label="Nonaga board: 19 wooden discs with red and black pawns"
+            ></svg>
+          </div>
+        </section>
+
+        <aside class="sidebar">
+          <div class="scoreboard">
+            <div class="player player--red" id="player-red">
+              <span class="player__pip"></span>
+              <span class="player__name">Red</span>
+              <span class="player__note"></span>
+            </div>
+            <div class="player player--black" id="player-black">
+              <span class="player__pip"></span>
+              <span class="player__name">Black</span>
+              <span class="player__note"></span>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button type="button" id="new-game" class="button button--primary">New game</button>
+            <button type="button" id="undo" class="button">Undo</button>
+            <button type="button" id="rules" class="button">How to play</button>
+          </div>
+
+          <section class="log-panel">
+            <h2 class="log-panel__title">Moves</h2>
+            <ol class="log" id="log"></ol>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+    <dialog class="rules" id="rules-dialog">
+      <form method="dialog">
+        <h2>How to play</h2>
+
+        <p>
+          Nonaga is for two players. The board is a hexagon of
+          <strong>19 wooden discs</strong>; you each have <strong>3 pawns</strong>. Be the first to
+          gather all three of your pawns on neighbouring discs — in a
+          <strong>line</strong>, a <strong>triangle</strong>, or a <strong>tick</strong>.
+        </p>
+
+        <h3>Setting up</h3>
+        <p>
+          Lay the 19 discs out in the hexagon and alternate the black and red pawns around the six
+          corners. Whoever opens the game is picked at random.
+        </p>
+
+        <h3>A turn</h3>
+        <ol>
+          <li>
+            <strong>Slide a pawn.</strong> Pick one of your pawns and a straight line. It travels as
+            far as it can: it stops on the last disc before the edge of the field, or just before
+            another pawn. Discs do not block it — the pawn rides over them.
+          </li>
+          <li>
+            <strong>Move a disc.</strong> Take a free disc (no pawn on it) from the rim of the
+            field — one with an empty space beside it, so it can be slid out without disturbing the
+            others — and put it somewhere it touches at least two other discs. The disc your
+            opponent moved last turn is out of bounds for you.
+          </li>
+        </ol>
+        <p class="rules__aside">
+          Removing a disc may leave another disc touching the rest on one side only. That is allowed.
+        </p>
+
+        <h3>Winning</h3>
+        <p>
+          The first player with all three pawns on neighbouring discs wins — a straight line, a
+          triangle, or a bent “tick”.
+        </p>
+
+        <p class="rules__credit">
+          Nonaga was designed by Viktor Bautista i Roca, with graphics by Ajsa Zdravkovic. This is
+          an unofficial digital version.
+        </p>
+
+        <button type="submit" class="button button--primary">Got it</button>
+      </form>
+    </dialog>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

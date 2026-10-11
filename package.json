@@ -1,0 +1,21 @@
+{
+  "name": "nonago",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A browser version of Nonaga, the two-player strategy game by Viktor Bautista i Roca",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.3"
+  }
+}
