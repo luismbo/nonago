@@ -81,10 +81,15 @@ A turn is two steps:
 1. **Slide a pawn** in a straight line. It travels as far as it can — stopping on the last disc
    before the edge of the field, or just before another pawn. Discs do not block it; it rides over
    them.
-2. **Move a disc.** Take a free disc (no pawn on it) from the rim of the field — one with an empty
-   space beside it, so that it can be slid out without moving the others — and put it somewhere it
-   touches at least two other discs. The disc your opponent relocated last turn is off limits to
+2. **Move a disc.** Take a free disc (no pawn on it) from the edge of the field and put it somewhere
+   it touches at least two other discs. The disc your opponent relocated last turn is off limits to
    you. Removing a disc may leave another disc touching the rest on one side only; that is allowed.
+
+   "From the edge" means the disc has to be one that can be *slid out* without moving any other
+   disc. A disc can only leave in a straight line, so what matters is not how many neighbours it
+   has but how much room between them: it is stuck unless some direction is clear by at least 90°
+   on both sides. Five neighbours in a row leave only 60° to squeeze through, and the disc does not
+   move at all — even though a space sits beside it.
 
 You win by getting all three of your pawns onto neighbouring discs: a straight line, a triangle, or
 a bent tick.

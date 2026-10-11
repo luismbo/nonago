@@ -20,6 +20,7 @@ import {
   INITIAL_CELLS,
   add,
   areAdjacent,
+  canSlideOut,
   cellKey,
   neighbours,
   parseKey,
@@ -135,13 +136,6 @@ export function legalPawnMoves(state: GameState): PawnMove[] {
   return moves;
 }
 
-/**
- * A disc can be slid out of the arrangement when at least one of the six cells
- * around it is empty. A disc ringed by all six neighbours is locked in place.
- */
-const canSlideOut = (discs: ReadonlySet<CellKey>, disc: CellKey): boolean =>
-  touchCount(discs, parseKey(disc)) < 6;
-
 /** Discs the player in the `move-disc` step is allowed to pick up. */
 export function liftableDiscs(state: GameState): CellKey[] {
   if (state.phase !== 'move-disc' || state.heldDisc !== null) return [];
@@ -149,7 +143,7 @@ export function liftableDiscs(state: GameState): CellKey[] {
     (disc) =>
       !state.pawns.has(disc) && // must be a free disc
       disc !== state.lockedDisc && // ...not the one the opponent just relocated
-      canSlideOut(state.discs, disc),
+      canSlideOut(state.discs, parseKey(disc)),
   );
 }
 

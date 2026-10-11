@@ -6,6 +6,7 @@ import {
   type CellKey,
   INITIAL_CELLS,
   add,
+  canSlideOut,
   cellKey,
   hexDistance,
   neighbours,
@@ -66,6 +67,10 @@ function placeAvoiding(state: GameState, avoid: CellKey): GameState {
 /** A disc with all six neighbours on the board cannot be slid out. */
 const isWalledIn = (q: number, r: number) =>
   neighbours({ q, r }).every((n) => INITIAL_CELLS.some((c) => c.q === n.q && c.r === n.r));
+
+/** Build a disc set from [q, r] pairs. */
+const boardOf = (cells: readonly (readonly [number, number])[]) =>
+  new Set(cells.map(([q, r]) => key(q, r)));
 
 describe('hex board', () => {
   it('starts from a hexagon of 19 discs', () => {
@@ -281,6 +286,74 @@ describe('winning', () => {
   });
 });
 
+describe('sliding a disc out', () => {
+  const at = (neighbours: readonly (readonly [number, number])[]) =>
+    canSlideOut(boardOf(neighbours), { q: 0, r: 0 });
+
+  it('takes a lone disc, or one with a single neighbour', () => {
+    expect(at([])).toBe(true);
+    expect(at([[1, 0]])).toBe(true);
+  });
+
+  it('takes a disc with two neighbours side by side', () => {
+    expect(at([[1, 0], [1, -1]])).toBe(true);
+  });
+
+  it('takes a disc with three neighbours in a row, like a corner', () => {
+    expect(at([[1, 0], [1, -1], [0, -1]])).toBe(true);
+  });
+
+  it('takes a disc with four neighbours in a row, like an edge', () => {
+    // A 180 degree gap: exactly clear, as in the rulebook's own example.
+    expect(at([[1, 0], [1, -1], [0, -1], [-1, 0]])).toBe(true);
+  });
+
+  it('refuses a disc with neighbours all the way round', () => {
+    expect(
+      at([
+        [1, 0],
+        [1, -1],
+        [0, -1],
+        [-1, 0],
+        [-1, 1],
+        [0, 1],
+      ]),
+    ).toBe(false);
+  });
+
+  it('refuses five neighbours, even though one cell is empty', () => {
+    // This is the case the old count-based rule got wrong: a disc with an empty
+    // space beside it, but only 120 degrees to slide through.
+    expect(at([[1, 0], [1, -1], [0, -1], [-1, 0], [-1, 1]])).toBe(false);
+  });
+
+  it('refuses three neighbours spread wide around it', () => {
+    // Every gap is 120 degrees; not one direction is clear.
+    expect(at([[1, 0], [0, -1], [-1, 1]])).toBe(false);
+  });
+
+  it('refuses four neighbours with a gap too small to slide through', () => {
+    expect(at([[1, 0], [1, -1], [0, -1], [-1, 1]])).toBe(false);
+  });
+
+  it('only cares about neighbours, not about discs further away', () => {
+    expect(at([[1, 0], [2, 0], [3, 0], [1, -1], [0, -1]])).toBe(true);
+  });
+
+  it('agrees with the starting board: the rim is loose, the middle is not', () => {
+    const board = boardOf(field);
+    let loose = 0;
+    for (const cell of INITIAL_CELLS) {
+      const canLeave = canSlideOut(board, cell);
+      if (canLeave) loose++;
+      // Corners (3 neighbours) and edges (4 in a row) come free; the seven
+      // discs in the middle have all six neighbours and are locked in.
+      expect(canLeave, `${cell.q},${cell.r}`).toBe(!isWalledIn(cell.q, cell.r));
+    }
+    expect(loose).toBe(12);
+  });
+});
+
 describe('moving a disc', () => {
   it('opens the rim once a pawn has been slid', () => {
     // Nothing can be lifted before the pawn step; afterwards the rim is fair game.
@@ -296,11 +369,15 @@ describe('moving a disc', () => {
     expect(liftable).not.toContain(key(0, -2)); // black pawn still on it
   });
 
-  it('never leaves a walled-in disc on offer', () => {
+  it('never leaves a disc on offer that could not be slid out', () => {
     const game = createGame();
     const moved = movePawn(game, { kind: 'pawn', from: key(-2, 0), to: key(1, 0) });
-    for (const cell of INITIAL_CELLS.filter(({ q, r }) => isWalledIn(q, r))) {
-      expect(liftableDiscs(moved)).not.toContain(cellKey(cell));
+    for (const cell of INITIAL_CELLS) {
+      const offered = liftableDiscs(moved).includes(cellKey(cell));
+      // The whole rim is offered, the seven locked middle discs never are.
+      expect(offered, `${cell.q},${cell.r}`).toBe(
+        canSlideOut(boardOf(field), cell) && !moved.pawns.has(cellKey(cell)),
+      );
     }
   });
 
@@ -313,13 +390,23 @@ describe('moving a disc', () => {
   it('opens up a disc that used to be walled in', () => {
     const game = createGame();
     const moved = movePawn(game, { kind: 'pawn', from: key(-2, 0), to: key(1, 0) });
-    // (0,1) sits inside the hexagon; clear the centre and it reaches the rim.
-    expect(liftableDiscs(moved)).not.toContain(key(0, 1));
+    // (1,0) sits in the middle with all six neighbours; nothing frees it yet.
+    expect(liftableDiscs(moved)).not.toContain(key(1, 0));
+
+    // Clear the two discs to its east. One empty neighbour is not enough --
+    // the disc still has five neighbours and no way through.
+    const once: GameState = {
+      ...moved,
+      discs: new Set([...moved.discs].filter((c) => c !== key(2, 0))),
+    };
+    expect(canSlideOut(once.discs, { q: 1, r: 0 })).toBe(false);
+
+    // Two in a row and there is a 180 degree gap to slide out through.
     const opened: GameState = {
       ...moved,
-      discs: new Set([...moved.discs].filter((c) => c !== key(0, 0))),
+      discs: new Set([...moved.discs].filter((c) => c !== key(2, 0) && c !== key(2, -1))),
     };
-    expect(liftableDiscs(opened)).toContain(key(0, 1));
+    expect(canSlideOut(opened.discs, { q: 1, r: 0 })).toBe(true);
   });
 
   it('holds a disc back from the opponent for one turn only', () => {
