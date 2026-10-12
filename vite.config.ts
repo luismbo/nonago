@@ -11,5 +11,9 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts'],
+    // The AI tests run real searches, which take seconds rather than
+    // milliseconds. Rules tests finish instantly either way.
+    testTimeout: 120_000,
+    hookTimeout: 120_000,
   },
 });

@@ -211,9 +211,11 @@ export class Board {
         this.pawnLayer.append(node);
         this.pawns.set(key, node);
       }
-      if (model.selected === key) node.classList.add('is-selected');
-      else node.classList.remove('is-selected');
-      if (model.state.winner && owner === model.state.winner) node.classList.add('is-winner');
+      // Set both explicitly rather than adding and removing: pawn elements are
+      // reused between games, so a leftover class from a finished game — a pawn
+      // left glowing as the winner of the last one — would otherwise stick.
+      node.classList.toggle('is-selected', model.selected === key);
+      node.classList.toggle('is-winner', model.state.winner === owner);
       this.place(node, key);
     }
   }

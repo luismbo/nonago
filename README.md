@@ -15,9 +15,14 @@ npm install
 npm run dev        # http://localhost:5173
 ```
 
-Two players share one screen. Whoever opens is picked at random, as the rules ask. Click one of
-your pawns to see where it can slide, click a landing spot, then lift a disc off the rim and put it
-back where it touches two others. `Escape` takes back a step, and so does **Undo**.
+Two players share one screen, or you can play the computer at four levels. Whoever opens is picked
+at random, as the rules ask. Click one of your pawns to see where it can slide, click a landing
+spot, then lift a disc off the rim and put it back where it touches two others. `Escape` takes back a
+step, and so does **Undo**.
+
+Against the computer you choose a colour and a level. Undo rewinds a whole round rather than one
+step, since a half-finished turn belongs to whoever is at the board and there is nobody there to
+finish it.
 
 | Command            | What it does                                  |
 | ------------------ | --------------------------------------------- |
@@ -50,7 +55,11 @@ src/
     hex.ts        Axial hex coordinates: the 19-cell board and the six corners
     rules.ts      The rules, as pure functions over an immutable state
     session.ts    A game in progress: undo, move log, draws
-    rules.test.ts Tests for all of the above
+    ai.ts         Evaluation, negamax search, and the four difficulty levels
+    *.test.ts     Tests for all of the above
+  ai/
+    worker.ts     Runs the search off the main thread
+    opponent.ts   Promises, staleness checks, and playing a plan out step by step
   ui/
     board.ts      The SVG board, reconciled in place so pawns can animate
   main.ts         Clicks -> legal moves, plus the status line, scoreboard and log
@@ -71,6 +80,40 @@ to do the sensible thing:
 - **Games always end.** The physical game has no end rule beyond "someone wins", and a game can be
   wandered in circles forever. Here a game is drawn after the same position comes round three times
   or after 150 turns, both far outside anything a real game reaches.
+
+## The computer
+
+A turn is always two forced steps — slide a pawn, then relocate a disc — so a *turn* is the natural
+unit of search, and the engine runs negamax with alpha-beta over whole turns.
+
+The evaluation is built on one observation: you win exactly when **two of your three pawns are
+touching**, so the game is a race to manufacture those two adjacencies while denying the opponent
+theirs. Nearly every term is a measure of that — how many touching pairs, how far the third pawn is
+from the other two, how enclosed each pawn is, and above all whether a single slide would win the
+game outright.
+
+A full turn is the cross product of pawn slides and disc relocations: 570 combinations in the
+opening, far too wide to search. Two things bring it down to something walkable — a disc is only
+worth considering if it lands touching a pawn, and of those only the closest few per slide are kept,
+ranked *before* any game state is built for them. Building a position is the expensive part, so
+filtering on geometry first is what makes the search fast.
+
+The four levels differ in depth and, importantly, in how much they err:
+
+| Level    | Looks ahead | Blunders a move |
+| -------- | ----------- | --------------- |
+| Casual   | ~1 turn     | about 40%       |
+| Club     | ~2 turns    | about 15%       |
+| Expert   | ~3 turns    | about 4%        |
+| Master   | ~5 turns    | never           |
+
+No player is perfect, and a beginner has to be able to win, so the weaker levels take a random move
+now and then and pick between near-equal options.
+
+The search runs in a worker, because a node costs milliseconds and doing that on the main thread
+stutters the board. It stops on its own clock at every level — a budget overrun costs depth, not a
+frozen page — and the interface re-checks every step of the plan against the live rules rather than
+trusting it, since the position can move on while it is thinking.
 
 ## Rules
 

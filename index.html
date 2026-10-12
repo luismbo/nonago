@@ -21,6 +21,10 @@
       <main class="layout">
         <section class="stage">
           <p class="status" id="status" aria-live="polite"></p>
+          <p class="thinking" id="thinking" hidden>
+            <span class="thinking__dots"><i></i><i></i><i></i></span>
+            <span id="thinking-text">Computer is thinking</span>
+          </p>
           <div class="board-frame">
             <svg
               id="board"
@@ -32,6 +36,36 @@
         </section>
 
         <aside class="sidebar">
+          <div class="setup" role="group" aria-label="Opponent">
+            <div class="setup__row">
+              <span class="setup__label" id="opponent-label">Play</span>
+              <div class="segmented" role="radiogroup" aria-labelledby="opponent-label">
+                <button type="button" class="segmented__btn is-active" data-opponent="human">
+                  Two players
+                </button>
+                <button type="button" class="segmented__btn" data-opponent="computer">
+                  vs computer
+                </button>
+              </div>
+            </div>
+            <div class="setup__row setup__row--nested" data-when="computer" hidden>
+              <span class="setup__label">You are</span>
+              <div class="segmented" role="radiogroup" aria-label="Your colour">
+                <button type="button" class="segmented__btn is-active" data-colour="red">
+                  Red
+                </button>
+                <button type="button" class="segmented__btn" data-colour="black">
+                  Black
+                </button>
+              </div>
+            </div>
+            <div class="setup__row setup__row--stacked" data-when="computer" hidden>
+              <label class="setup__label" for="difficulty">Difficulty</label>
+              <div class="levels" role="radiogroup" aria-labelledby="difficulty"></div>
+              <p class="setup__blurb" id="difficulty-blurb"></p>
+            </div>
+          </div>
+
           <div class="scoreboard">
             <div class="player player--red" id="player-red">
               <span class="player__pip"></span>
