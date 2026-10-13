@@ -49,6 +49,12 @@ both at `https://<user>.github.io/` and at `https://<user>.github.io/<repo>/`.
 
 ## How it is put together
 
+[TECHNICAL.md](TECHNICAL.md) covers the architecture in detail — why the board is modelled
+as a lattice rather than pixels, how the rules engine is kept pure, how the search was made fast
+enough to run in a browser, and the bugs that measurement caught and reading the code did not.
+
+In brief:
+
 ```
 src/
   game/
